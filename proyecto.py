@@ -50,77 +50,106 @@ class kTree():
 
 def parse_input(line):
 
+
     body, author, upstr, downstr, id, date = ('',) * 6
 
     arrow, ups, downs = (0,) * 3
 
     arrow1, body1, author1, ups1, downs1, id1, date1 = (True,) * 7
 
-    i = 0
-    while i < len(line):
+    i = len(line)-3
+    while i > 0:
+        
+        
+        # for i in range(len(line)):
 
-        if arrow1:
+        if date1:
 
-            if line[i] == '-':
-                arrow += 1
-            else:
-                arrow1 = False
-                i += 1
-                continue
-
-        if body1 and not(arrow1):
-            if line[i] != '[':
-
-                body += line[i]
-            else:
-                body1 = False
-                i += 1
-                continue
-
-        if not(body1) and author1:
             if line[i] != '|':
+                date += line[i]
+                
+            else:
+                date1 = False
+                i -= 1
+                date=date[::-1]
+
+                #print(date)
+                continue
+
+        if id1 and not(date1):
+            if line[i] != '|':
+
+                id += line[i]
+            else:
+                # print("Entre al condi")
+                id1 = False
+                # print(body)
+                i -= 1
+                id=id[::-1]
+                #print(id)
+                continue
+
+        if not(id1) and downs1:
+            
+            while line[i] != '|':
+                #print(line[i])
+                downstr += line[i]
+                i -= 1
+
+            #print("SSS")
+            downs1 = False
+            downs=int(downstr[::-1])
+            #print(downs)
+            i -= 1
+            continue
+        
+# {indent_arrow}{body}[{author}|{ups}|{downs}|{comment_id}|{date}]
+
+        if not(downs1) and ups1:
+            while line[i] != '|':
+                upstr += line[i]
+                i -= 1
+
+                # print(upstr,1)
+            ups = int(upstr[::-1])
+            ups1 = False
+            #print(ups)
+            i -= 1
+            continue
+
+        if not(ups1) and author1:
+
+            #print(line[i])
+            if line[i] != '[':
                 author += line[i]
             else:
                 author1 = False
-                i += 1
-                continue
+                i -= 1
+                author=author[::-1]
+                #print(author)
+                break
 
-        if not(author1) and ups1:
-            while line[i] != '|':
-                upstr += line[i]
-                i += 1
+        i -= 1
 
-            ups = int(upstr)
-            ups1 = False
-            i += 1
-            continue
-        if not(ups1) and downs1:
-            while line[i] != '|':
+        
+    if not(author1) and arrow1:
+        j=0
+        while line[j] != '>':
+            arrow+=1
+            j+=1
+        arrow1=False
+        j+=1
 
-                downstr += line[i]
-                i += 1
-            downs = int(downstr)
-            downs1 = False
-            i += 1
-            continue
 
-        if not(downs1) and id1:
-            if line[i] != '|':
-                id += line[i]
-            else:
-                id1 = False
-                i += 1
-                continue
 
-        if not(id1) and date1:
-            if line[i] != ']':
-                date += line[i]
-            else:
-                date1 = False
-                i += 1
-                continue
-
-        i += 1
+    if not(arrow1) and body1:
+        while j <= i:
+            body+=line[j]
+            j+=1
+        body1=False
+                
+          
+    
 
     comment = Comment(arrow // 2, body, author, ups, downs, id, date)
 
