@@ -1,3 +1,10 @@
+    ###################PROYECTO ARBOLES Y GRAFOS 2018###########################
+"""
+Estudiantes:
+    Jeffrey García Gallego
+    Mauricio Diaz Ćortés
+"""
+
 ###################PROYECTO ARBOLES Y GRAFOS 2018###########################
 """
 Estudiantes:
@@ -8,10 +15,11 @@ Estudiantes:
 from sys import stdin
 from collections import deque
 from sys import setrecursionlimit
+import time
 
-setrecursionlimit(1000)
+setrecursionlimit(100000)
 
-
+x=time.time()
 class Comment():
     # Esta clase contiene información sobre los comentarios
 
@@ -50,30 +58,28 @@ class kTree():
 
 def parse_input(line):
 
-
     body, author, upstr, downstr, id, date = ('',) * 6
 
     arrow, ups, downs = (0,) * 3
 
     arrow1, body1, author1, ups1, downs1, id1, date1 = (True,) * 7
 
-    i = len(line)-3
+    i = len(line) - 3
     while i > 0:
-        
-        
+
         # for i in range(len(line)):
 
         if date1:
 
             if line[i] != '|':
                 date += line[i]
-                
+
             else:
                 date1 = False
                 i -= 1
-                date=date[::-1]
+                date = date[::-1]
 
-                #print(date)
+                # print(date)
                 continue
 
         if id1 and not(date1):
@@ -85,24 +91,24 @@ def parse_input(line):
                 id1 = False
                 # print(body)
                 i -= 1
-                id=id[::-1]
-                #print(id)
+                id = id[::-1]
+                # print(id)
                 continue
 
         if not(id1) and downs1:
-            
+
             while line[i] != '|':
-                #print(line[i])
+                # print(line[i])
                 downstr += line[i]
                 i -= 1
 
-            #print("SSS")
+            # print("SSS")
             downs1 = False
-            downs=int(downstr[::-1])
-            #print(downs)
+            downs = int(downstr[::-1])
+            # print(downs)
             i -= 1
             continue
-        
+
 # {indent_arrow}{body}[{author}|{ups}|{downs}|{comment_id}|{date}]
 
         if not(downs1) and ups1:
@@ -113,50 +119,44 @@ def parse_input(line):
                 # print(upstr,1)
             ups = int(upstr[::-1])
             ups1 = False
-            #print(ups)
+            # print(ups)
             i -= 1
             continue
 
         if not(ups1) and author1:
 
-            #print(line[i])
+            # print(line[i])
             if line[i] != '[':
                 author += line[i]
             else:
                 author1 = False
                 i -= 1
-                author=author[::-1]
-                #print(author)
+                author = author[::-1]
+                # print(author)
                 break
 
         i -= 1
 
-        
     if not(author1) and arrow1:
-        j=0
+        j = 0
         while line[j] != '>':
-            arrow+=1
-            j+=1
-        arrow1=False
-        j+=1
-
-
+            arrow += 1
+            j += 1
+        arrow1 = False
+        j += 1
 
     if not(arrow1) and body1:
         while j <= i:
-            body+=line[j]
-            j+=1
-        body1=False
-                
-          
-    
+            body += line[j]
+            j += 1
+        body1 = False
 
     comment = Comment(arrow // 2, body, author, ups, downs, id, date)
 
     return comment
 
 
-def make_tree(tree, i):
+def make_tree(tree, i, inTree, line):
     # Esta función se encarga de construir el árbol
     # Recibe un árbol (vacío) y un iterador (que se usa para la lista de usuarios)
 
@@ -165,11 +165,10 @@ def make_tree(tree, i):
 
     flag = True
 
-    # Se toma la linea del input
-    line = stdin.readline()
     # Se comprueba que no haya llegado al final del input file
     if len(line) == 0:
-        return tree
+        # retorna una línea vacía
+        return ''
     else:
         # Se crea el nodo comentario correspondiente
         comment = parse_input(line)
@@ -188,9 +187,15 @@ def make_tree(tree, i):
 
     # Si es el nodo raíz, se pone ese nodo como raíz en el árbol y se añade a la lista de niveles
     if comment.arrow == 0:
-        tree.root = comment
-        tree.levels.append([comment])
-        make_tree(tree, i)
+        # Se comprueba que ya no esté leyéndose en un árbol
+        if inTree is False:
+            tree.root = comment
+            tree.levels.append([comment])
+            inTree = True
+            return make_tree(tree, i, inTree, stdin.readline())
+        # Si ya se está leyendo otro árbol, se retorna la linea en la que empieza el siguiente
+        else:
+            return line
     # Si es otro nodo distinto al de raíz
     else:
         # Si el nivel de ese comentario no está en la lista de niveles, se agrega
@@ -201,7 +206,7 @@ def make_tree(tree, i):
             tree.levels[comment.arrow].append(comment)
         # El comentrio actual se hace hijo de un padre de su nivel anterior
         tree.makeChild(comment, comment.arrow - 1)
-        make_tree(tree, i)
+        return make_tree(tree, i, inTree, stdin.readline())
 
 
 def preorderTraversal(root):
@@ -210,31 +215,17 @@ def preorderTraversal(root):
     Stack = deque([])
     # La lista Preorder contiene el resultado
     Preorder = []
-    Preorder.append(root.id)
+    #Preorder.append(root.id)
     Stack.append(root)
     while len(Stack) > 0:
+
+        curr=Stack.pop()
+        Preorder.append(curr.id)
+
+        for i in curr.children[::-1]:
+            Stack.append(i)
         # 'flag' verifica que todos los nodos hijos hayan sido visitados
-        flag = 0
-        # Caso 1: Si el tope de la pila es una hoja, entonces se saca de la pila
-        if len((Stack[len(Stack) - 1]).children) == 0:
-            X = Stack.pop()
-        # Caso 2: Si el tope de la pila es un padre con hijos
-        else:
-            Par = Stack[len(Stack) - 1]
-        # Si se encuentra un hijo no visitado, entonces este se mete a la pila
-        # y se guarda en la lista auxiliar marcado como visitado.
-        # Se empieza otra vez desde el caso 1, para explorar el nuevo nodo
-        for i in range(0, len(Par.children)):
-            if Par.children[i].id not in Preorder:
-                flag = 1
-                Stack.append(Par.children[i])
-                Preorder.append(Par.children[i].id)
-                break
-                # Si todos los nodos hijos han sido visitados, entonces
-                # se saca al padre de la pila
-        if flag == 0:
-            Stack.pop()
-    # Se retorna la solución que es la lista en preorder
+        
     return Preorder
 
 
@@ -269,39 +260,46 @@ def main():
     # Global: users (utilizado en la función getUsernames()), sumN (utilizado en la función
     # sumOfNodes)
     global users, sumN
-    sumN = {}
-    users = {}
-    # Fin de las variables globales
+    # Se lee la primera línea
+    line = stdin.readline()
+    while len(line) != 0:
+        sumN = {}
+        users = {}
+        # Fin de las variables globales
 
-    # Comienzo del código principal
-    # Se crea una instancia árbol con un nodo 0, que luego será reescrito
-    tree = kTree(0)
-    # Se arma el árbol con el árbol declarado anteriormente
-    make_tree(tree, 0)
-    # Se procesa la lista de preorder del árbol
-    ans = preorderTraversal(tree.root)
-    for id in ans[:-1]:
-        print(id, end=" ")
-    print(ans[-1], end='')
-    sumOfNodes(tree.root)
-    print()
-    for id in ans[:]:
-        print(sumN[id][0], sumN[id][1])
-    # Se inicializa la lista donde estará la lista de usuarios con
-    # sus respectivas ocurrencias
-    ans = [0 for _ in range(len(users))]
-    # Se inicializa la lista que cuenta los ocurrencias de los
-    # usuarios
-    counts = [0 for _ in range(len(users))]
-    # Se genera la lista de usuarios y ocurrencias en la lista ans
-    # como tuplas
-    getUsernames(tree.root, users, counts, ans)
-    # Se ordena la lista primero con el criterio de las ocurrencias en
-    # orden descendente y se desempata con el orden léxicográfico
-    ans.sort(key=lambda tup: (-tup[1], tup[0]))
-    # Se imprime cada autor con su respectiva ocurrencia
-    for author, count in ans:
-        print(author, count)
-
+        # Comienzo del código principal
+        # Se crea una instancia árbol con un nodo 0, que luego será reescrito
+        tree = kTree(0)
+        # Se arma el árbol con el árbol declarado anteriormente
+        line = make_tree(tree, 0, False, line)
+        # Se procesa la lista de preorder del árbol
+        
+        ans = preorderTraversal(tree.root)
+        
+        for id in ans[:-1]:
+            print(id, end=" ")
+        print(ans[-1], end='')
+        sumOfNodes(tree.root)
+        print()
+        for id in ans[:]:
+            print(sumN[id][0], sumN[id][1])
+        # Se inicializa la lista donde estará la lista de usuarios con
+        # sus respectivas ocurrencias
+        ans = [0 for _ in range(len(users))]
+        # Se inicializa la lista que cuenta los ocurrencias de los
+        # usuarios
+        counts = [0 for _ in range(len(users))]
+        # Se genera la lista de usuarios y ocurrencias en la lista ans
+        # como tuplas
+        getUsernames(tree.root, users, counts, ans)
+        # Se ordena la lista primero con el criterio de las ocurrencias en
+        # orden descendente y se desempata con el orden léxicográfico
+        ans.sort(key=lambda tup: (-tup[1], tup[0]))
+        # Se imprime cada autor con su respectiva ocurrencia
+        for author, count in ans:
+            print(author, count)
+            
+    y=time.time()
+    #print(y-x)        
 
 main()
