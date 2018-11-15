@@ -1,10 +1,3 @@
-    ###################PROYECTO ARBOLES Y GRAFOS 2018###########################
-"""
-Estudiantes:
-    Jeffrey García Gallego
-    Mauricio Diaz Ćortés
-"""
-
 ###################PROYECTO ARBOLES Y GRAFOS 2018###########################
 """
 Estudiantes:
@@ -225,7 +218,7 @@ def preorderTraversal(root):
         for i in curr.children[::-1]:
             Stack.append(i)
         # 'flag' verifica que todos los nodos hijos hayan sido visitados
-        
+
     return Preorder
 
 
@@ -273,9 +266,9 @@ def main():
         # Se arma el árbol con el árbol declarado anteriormente
         line = make_tree(tree, 0, False, line)
         # Se procesa la lista de preorder del árbol
-        
+
         ans = preorderTraversal(tree.root)
-        
+
         for id in ans[:-1]:
             print(id, end=" ")
         print(ans[-1], end='')
@@ -298,8 +291,8 @@ def main():
         # Se imprime cada autor con su respectiva ocurrencia
         for author, count in ans:
             print(author, count)
-            
+
     y=time.time()
-    #print(y-x)        
+    #print(y-x)
 
 main()
