@@ -214,22 +214,33 @@ def getUsernames(root, dic, counts, ans):
 
 
 def makeGraph(root, dic, G):
+    global ans
     # Esta fuńción se encarga de imprimir el preorder del árbol
-    visited = [0 for _ in range(len(dic))]
+
     Stack = deque([])
     Stack.append(root)
     while len(Stack) > 0:
-
         curr = Stack.pop()
-        if visited[dic[curr.author]] == 0:
-            ady = avgTime(curr, dic)
-            for i in range(len(ady)):
-                if i != dic[curr.author] and ady[i] != [0, 0]:
-                    G[dic[curr.author]].append((i, int(ady[i][0] / ady[i][1])))
+        ady = avgTime(curr, dic)
+        for i in range(len(ady)):
+            flag = False
+            if i != dic[curr.author] and ady[i] != [0, 0]:
+                for j in range(len(G[dic[curr.author]])):
+                    if G[dic[curr.author]][j][0] == i:
+                        G[dic[curr.author]][j][1] = G[dic[curr.author]][j][1] + (ady[i][0] // ady[i][1])
+                        # G[i][j][1] = G[i][j][1] + (ady[i][0] // ady[i][1])
+                        flag = True
+
+                if flag is False:
+                    G[dic[curr.author]].append([i, ady[i][0] // ady[i][1]])
+                    G[i].append([dic[curr.author], ady[i][0] // ady[i][1]])
 
         for i in curr.children[::-1]:
             Stack.append(i)
-        # 'flag' verifica que todos los nodos hijos hayan sido visitados
+
+    for i in range(len(G)):
+        for j in range(len(G[i])):
+            G[i][j][1] = G[i][j][1] // ans[i][1] if G[i][j][1] // ans[i][1] > 0 else 1
 
     return G
 
@@ -266,20 +277,18 @@ def parseDate(date):
 def diff(date_ini, date_end):
     yearI, monthI, dayI, hourI, minI, secI = parseDate(date_ini)
     yearE, monthE, dayE, hourE, minE, secE = parseDate(date_end)
-    return (datetime(yearI, monthI, dayI, hourI, minI, secI) - datetime(yearE, monthE, dayE, hourE, minE, secE)).seconds
+    return (datetime(yearE, monthE, dayE, hourE, minE, secE) - datetime(yearI, monthI, dayI, hourI, minI, secI)).seconds
 
 
 def main():
     # Global: users (utilizado en la función getUsernames()), sumN (utilizado en la función
     # sumOfNodes)
-    global users, sumN
+    global users, ans
     # Se lee la primera línea
     line = stdin.readline()
     while len(line) != 0:
-        sumN = {}
-        users = {}
         # Fin de las variables globales
-
+        users = {}
         # Comienzo del código principal
         # Se crea una instancia árbol con un nodo 0, que luego será reescrito
         tree = kTree(0)
@@ -300,13 +309,9 @@ def main():
 
         ##########################################################
 
-        dic = {}
-        for i in range(len(ans)):
-            dic[ans[i][0]] = i
-
-        G = [list() for _ in range(len(dic))]
-        makeGraph(tree.root, dic, G)
-        print(G[0])
+        G = [list() for _ in range(len(users))]
+        makeGraph(tree.root, users, G)
+        print(G)
 
 
 main()
