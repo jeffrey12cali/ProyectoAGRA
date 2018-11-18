@@ -2,6 +2,7 @@ from sys import stdin
 from collections import deque
 from sys import setrecursionlimit
 from datetime import datetime
+from collections import Counter
 
 setrecursionlimit(100000)
 
@@ -213,34 +214,30 @@ def getUsernames(root, dic, counts, ans):
         getUsernames(node, dic, counts, ans)
 
 
-def makeGraph(root, dic, G):
-    global ans
+def makeGraph(root, dic):
     # Esta fuńción se encarga de imprimir el preorder del árbol
-
+    G = [[[0, 0] for _ in range(len(dic))] for _ in range(len(dic))]
     Stack = deque([])
     Stack.append(root)
     while len(Stack) > 0:
         curr = Stack.pop()
         ady = avgTime(curr, dic)
         for i in range(len(ady)):
-            flag = False
-            if i != dic[curr.author] and ady[i] != [0, 0]:
-                for j in range(len(G[dic[curr.author]])):
-                    if G[dic[curr.author]][j][0] == i:
-                        G[dic[curr.author]][j][1] = G[dic[curr.author]][j][1] + (ady[i][0] // ady[i][1])
-                        # G[i][j][1] = G[i][j][1] + (ady[i][0] // ady[i][1])
-                        flag = True
+            G[dic[curr.author]][i][0] += ady[i][0]
+            G[dic[curr.author]][i][1] += ady[i][1]
 
-                if flag is False:
-                    G[dic[curr.author]].append([i, ady[i][0] // ady[i][1]])
-                    G[i].append([dic[curr.author], ady[i][0] // ady[i][1]])
+            G[i][dic[curr.author]][0] += ady[i][0]
+            G[i][dic[curr.author]][1] += ady[i][1]
 
         for i in curr.children[::-1]:
             Stack.append(i)
 
     for i in range(len(G)):
-        for j in range(len(G[i])):
-            G[i][j][1] = G[i][j][1] // ans[i][1] if G[i][j][1] // ans[i][1] > 0 else 1
+        for j in range(len(G)):
+            if j != i and G[i][j][1] != 0:
+                G[i][j] = G[i][j][0] // G[i][j][1]
+            else:
+                G[i][j] = INF
 
     return G
 
@@ -280,10 +277,60 @@ def diff(date_ini, date_end):
     return (datetime(yearE, monthE, dayE, hourE, minE, secE) - datetime(yearI, monthI, dayI, hourI, minI, secI)).seconds
 
 
+def findNumCentres(G):
+    deg = [0 for _ in range(len(G))]
+    for i in range(len(G)):
+        for j in range(len(G)):
+            if G[i][j] != INF:
+                deg[i] += 1
+
+    degr = Counter(deg).most_common(1)[0][0]
+
+    print("degree:", deg)
+    # print(degr)
+
+    return degr
+
+
+def getCenters(cent, users):
+    ans = list()
+    for usr, num in cent:
+        ans.append(users[usr])
+    return ans
+
+
+def floyd_warshall(G, n):
+    dist = G
+    for v in range(n):
+        dist[v][v] = 0
+    for k in range(n):
+        for i in range(n):
+            for j in range(n):
+                if dist[i][j] > dist[i][k] + dist[k][j]:
+                    dist[i][j] = dist[i][k] + dist[k][j]
+    return dist
+
+
+def getVerts(dist, centers):
+    verts = [list() for _ in range(len(centers))]
+    distnc = dist
+    for v in range(len(distnc)):
+        distnc[v][v] = 0
+    for v in centers:
+        verts[v].append(v)
+    for i in range(len(distnc)):
+        min = INF
+        for c in centers:
+            if distnc[i][c] < min and distnc[i][c] != 0:
+                verts[c].append(i)
+
+    return verts
+
+
 def main():
     # Global: users (utilizado en la función getUsernames()), sumN (utilizado en la función
     # sumOfNodes)
-    global users, ans
+    global users
     # Se lee la primera línea
     line = stdin.readline()
     while len(line) != 0:
@@ -305,13 +352,30 @@ def main():
         getUsernames(tree.root, users, counts, ans)
         # Se ordena la lista primero con el criterio de las ocurrencias en
         # orden descendente y se desempata con el orden léxicográfico
-        # ans.sort(key=lambda tup: (-tup[1], tup[0]))
+        ans.sort(key=lambda tup: (-tup[1], tup[0]))
+        # print(ans)
+        users = {}
+        for i in range(len(ans)):
+            users[ans[i][0]] = i
 
+        # print(users)
         ##########################################################
 
-        G = [list() for _ in range(len(users))]
-        makeGraph(tree.root, users, G)
-        print(G)
+        G = makeGraph(tree.root, users)
+        # print(G)
+        k = findNumCentres(G)
+        # print(k)
+        centers = getCenters(ans[0:k], users)
+        # print(centers)
+
+        dist = floyd_warshall(G, len(G))
+        # print(dist)
+
+        verts = getVerts(dist, centers)
+        print(verts)
+
+        for i in range(len(centers)):
+            print(centers[i], verts[i], dist[i])
 
 
 main()
