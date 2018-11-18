@@ -16,6 +16,8 @@ from sys import stdin
 from collections import deque
 from sys import setrecursionlimit
 import time
+import re
+
 
 setrecursionlimit(100000)
 
@@ -215,18 +217,20 @@ def preorderTraversal(root):
     Stack = deque([])
     # La lista Preorder contiene el resultado
     Preorder = []
+    preorderBody = {}
     #Preorder.append(root.id)
     Stack.append(root)
     while len(Stack) > 0:
 
         curr=Stack.pop()
         Preorder.append(curr.id)
-
+        preorderBody[curr.id]=curr.body
+        
         for i in curr.children[::-1]:
             Stack.append(i)
         # 'flag' verifica que todos los nodos hijos hayan sido visitados
         
-    return Preorder
+    return Preorder,preorderBody
 
 
 def sumOfNodes(node):
@@ -255,6 +259,65 @@ def getUsernames(root, dic, counts, ans):
     for node in root.children:
         getUsernames(node, dic, counts, ans)
 
+def getRangeWords(string):
+
+    g=0
+    p=9999
+    #string =input("Enter the string: ")
+    #x={}
+    y={}
+    cadena=re.findall("[a-zA-Z_]+", string)
+    if len(cadena)==0:
+        p=-1
+
+    for i in range (len(cadena)):
+        cadena[i]=cadena[i].lower()
+    #['yes', 'sir', 'right', 'away', 'sir', 'right', 'sir', 'yes']
+
+    srepeat=list(set(cadena))
+    #['away', 'right', 'yes', 'sir']
+
+    #print(cadena)
+    #print(len(cadena))
+    #print(srepeat)
+
+    count=0
+    contWords=0
+    for i in range(len(srepeat)):
+        #x[srepeat[i]]=i
+        y[srepeat[i]]=0
+
+
+    for i in range(len(cadena)):
+        
+        for j in  range(i,len(cadena)):
+            #print(i)
+
+            if y[cadena[j]]==0:
+                y[cadena[j]]=1
+                count+=1
+                if count==len(srepeat):
+                    if j-i<p-g:
+                        g=i
+                        p=j
+                    if j-i==p-g:
+                        if i < g:
+                            g=i
+                            p=j
+                        else:
+                            pass
+
+       
+                    #print(i,j)
+                    count=0
+                    for s in range(len(srepeat)):
+                        #x[srepeat[i]]=i
+                        y[srepeat[s]]=0
+
+                    break
+    #print(g,p+1)
+    return g,p+1
+
 
 def main():
     # Global: users (utilizado en la función getUsernames()), sumN (utilizado en la función
@@ -274,8 +337,9 @@ def main():
         line = make_tree(tree, 0, False, line)
         # Se procesa la lista de preorder del árbol
         
-        ans = preorderTraversal(tree.root)
-        
+        ans,ans1 = preorderTraversal(tree.root)
+        #ENTREGA 0 
+        """
         for id in ans[:-1]:
             print(id, end=" ")
         print(ans[-1], end='')
@@ -298,7 +362,20 @@ def main():
         # Se imprime cada autor con su respectiva ocurrencia
         for author, count in ans:
             print(author, count)
-            
+        """
+        #ENTREGA 1
+        #parte 2
+        for id in ans[:-1]:
+            is1,is2=getRangeWords(ans1[id])
+
+            print(id, is1, is2)
+
+        is1,is2=getRangeWords(ans1[ans[-1]])
+
+        print(ans[-1], is1, is2)
+        #sumOfNodes(tree.root)
+        #print()
+
     y=time.time()
     #print(y-x)        
 

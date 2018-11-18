@@ -11,6 +11,8 @@ while True:
     #x={}
     y={}
     cadena=re.findall("[a-zA-Z_]+", string)
+    if len(cadena)==0:
+        p=0
     for i in range (len(cadena)):
         cadena[i]=cadena[i].lower()
     #['yes', 'sir', 'right', 'away', 'sir', 'right', 'sir', 'yes']
@@ -18,7 +20,7 @@ while True:
     srepeat=list(set(cadena))
     #['away', 'right', 'yes', 'sir']
 
-    #print(cadena)
+    print(cadena)
     #print(len(cadena))
     #print(srepeat)
 
