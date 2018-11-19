@@ -3,6 +3,7 @@ from collections import deque
 from sys import setrecursionlimit
 from datetime import datetime
 from collections import Counter
+from heapq import heappop, heappush
 
 setrecursionlimit(100000)
 
@@ -215,7 +216,7 @@ def getUsernames(root, dic, counts, ans):
 
 
 def makeGraph(root, dic):
-    # Esta fuńción se encarga de imprimir el preorder del árbol
+
     G = [[[0, 0] for _ in range(len(dic))] for _ in range(len(dic))]
     Stack = deque([])
     Stack.append(root)
@@ -232,14 +233,19 @@ def makeGraph(root, dic):
         for i in curr.children[::-1]:
             Stack.append(i)
 
+    # Create degree matrix
+    deg = [0 for _ in range(len(G))]
+
     for i in range(len(G)):
         for j in range(len(G)):
             if j != i and G[i][j][1] != 0:
                 G[i][j] = G[i][j][0] // G[i][j][1]
             else:
                 G[i][j] = INF
+            if G[i][j] != INF:
+                deg[i] += 1
 
-    return G
+    return G, deg
 
 
 def avgTime(root, dic):
@@ -277,17 +283,11 @@ def diff(date_ini, date_end):
     return (datetime(yearE, monthE, dayE, hourE, minE, secE) - datetime(yearI, monthI, dayI, hourI, minI, secI)).seconds
 
 
-def findNumCentres(G):
-    deg = [0 for _ in range(len(G))]
-    for i in range(len(G)):
-        for j in range(len(G)):
-            if G[i][j] != INF:
-                deg[i] += 1
-
+def findNumCentres(G, deg):
     degr = Counter(deg).most_common(1)[0][0]
 
-    print("degree:", deg)
-    # print(degr)
+    if degr < 2:
+        degr = 2
 
     return degr
 
@@ -299,30 +299,41 @@ def getCenters(cent, users):
     return ans
 
 
-def floyd_warshall(G, n):
-    dist = G
-    for v in range(n):
-        dist[v][v] = 0
-    for k in range(n):
-        for i in range(n):
-            for j in range(n):
-                if dist[i][j] > dist[i][k] + dist[k][j]:
-                    dist[i][j] = dist[i][k] + dist[k][j]
+def dijkstra(G, src):
+    dist = [INF for _ in range(len(G))]
+    sptSet = [0 for _ in range(len(G))]
+    dist[src] = 0
+    u = 0
+    for i in range(len(G)):
+        # Pick the minimum distance vertex from the set of vertices not
+        # yet processed. u is always equal to src in the first iteration.
+        min = INF
+        for j in range(len(G)):
+            if dist[j] <= min and sptSet[j] == 0:
+                min = dist[j]
+                u = j
+
+        # Mark the picked vertex as processed
+        sptSet[u] = 1
+
+        for v in range(len(G)):
+            if sptSet[v] == 0 and G[u][v] != INF and dist[u] != INF and dist[u] + G[u][v] < dist[v]:
+                dist[v] = dist[u] + G[u][v]
+
     return dist
 
 
-def getVerts(dist, centers):
+def getVerts(dist, centers, indx):
     verts = [list() for _ in range(len(centers))]
-    distnc = dist
-    for v in range(len(distnc)):
-        distnc[v][v] = 0
-    for v in centers:
-        verts[v].append(v)
-    for i in range(len(distnc)):
+    for i in range(len(indx)):
         min = INF
-        for c in centers:
-            if distnc[i][c] < min and distnc[i][c] != 0:
-                verts[c].append(i)
+        cent = -1
+        if i not in centers:
+            for c in centers:
+                if dist[c][i] < min and dist[c][i] != 0:
+                    min = dist[c][i]
+                    cent = c
+            verts[cent].append(indx[i])
 
     return verts
 
@@ -355,27 +366,41 @@ def main():
         ans.sort(key=lambda tup: (-tup[1], tup[0]))
         # print(ans)
         users = {}
+        indx = {}
         for i in range(len(ans)):
             users[ans[i][0]] = i
+            indx[i] = ans[i][0]
 
         # print(users)
         ##########################################################
 
-        G = makeGraph(tree.root, users)
-        # print(G)
-        k = findNumCentres(G)
+        G, deg = makeGraph(tree.root, users)
+        # print("Grafo:", G)
+        k = findNumCentres(G, deg)
         # print(k)
         centers = getCenters(ans[0:k], users)
         # print(centers)
 
-        dist = floyd_warshall(G, len(G))
+        #dist, verts = floyd_warshall(G, len(G), centers, indx)
         # print(dist)
+        dist = [list() for _ in range(len(centers))]
+        for c in centers:
+            dist[c] = dijkstra(G, c)
+        # print("DIST:", dist[0])
 
-        verts = getVerts(dist, centers)
-        print(verts)
-
+        verts = getVerts(dist, centers, indx)
+        # print(verts)
+        # print(dist[0])
         for i in range(len(centers)):
-            print(centers[i], verts[i], dist[i])
+            sum = 0
+            print(ans[i][0], end=' ')
+            for v in verts[i]:
+                print(v, end=' ')
+                sum += dist[i][users[v]]
+            print(sum, end='\n\n')
+
+        # for key in users:
+        # print(key)
 
 
 main()
