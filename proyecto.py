@@ -1,10 +1,3 @@
-    ###################PROYECTO ARBOLES Y GRAFOS 2018###########################
-"""
-Estudiantes:
-    Jeffrey García Gallego
-    Mauricio Diaz Ćortés
-"""
-
 ###################PROYECTO ARBOLES Y GRAFOS 2018###########################
 """
 Estudiantes:
@@ -15,13 +8,19 @@ Estudiantes:
 from sys import stdin
 from collections import deque
 from sys import setrecursionlimit
+from datetime import datetime
+from collections import Counter
 import time
 import re
 
 
 setrecursionlimit(100000)
 
-x=time.time()
+x = time.time()
+
+INF = float('inf')
+
+
 class Comment():
     # Esta clase contiene información sobre los comentarios
 
@@ -111,7 +110,6 @@ def parse_input(line):
             i -= 1
             continue
 
-# {indent_arrow}{body}[{author}|{ups}|{downs}|{comment_id}|{date}]
 
         if not(downs1) and ups1:
             while line[i] != '|':
@@ -218,19 +216,19 @@ def preorderTraversal(root):
     # La lista Preorder contiene el resultado
     Preorder = []
     preorderBody = {}
-    #Preorder.append(root.id)
+    # Preorder.append(root.id)
     Stack.append(root)
     while len(Stack) > 0:
 
-        curr=Stack.pop()
+        curr = Stack.pop()
         Preorder.append(curr.id)
-        preorderBody[curr.id]=curr.body
-        
+        preorderBody[curr.id] = curr.body
+
         for i in curr.children[::-1]:
             Stack.append(i)
         # 'flag' verifica que todos los nodos hijos hayan sido visitados
-        
-    return Preorder,preorderBody
+
+    return Preorder, preorderBody
 
 
 def sumOfNodes(node):
@@ -259,64 +257,185 @@ def getUsernames(root, dic, counts, ans):
     for node in root.children:
         getUsernames(node, dic, counts, ans)
 
+
 def getRangeWords(string):
 
-    g=0
-    p=9999
+    g = 0
+    p = 9999
     #string =input("Enter the string: ")
-    #x={}
-    y={}
-    cadena=re.findall("[a-zA-Z_]+", string)
-    if len(cadena)==0:
-        p=-1
-
-    for i in range (len(cadena)):
-        cadena[i]=cadena[i].lower()
-    #['yes', 'sir', 'right', 'away', 'sir', 'right', 'sir', 'yes']
-
-    srepeat=list(set(cadena))
-    #['away', 'right', 'yes', 'sir']
-
-    #print(cadena)
-    #print(len(cadena))
-    #print(srepeat)
-
-    count=0
-    contWords=0
-    for i in range(len(srepeat)):
-        #x[srepeat[i]]=i
-        y[srepeat[i]]=0
-
+    # x={}
+    y = {}
+    cadena = re.findall("[a-zA-Z_]+", string)
+    if len(cadena) == 0:
+        p = -1
 
     for i in range(len(cadena)):
-        
-        for j in  range(i,len(cadena)):
-            #print(i)
+        cadena[i] = cadena[i].lower()
+    #['yes', 'sir', 'right', 'away', 'sir', 'right', 'sir', 'yes']
 
-            if y[cadena[j]]==0:
-                y[cadena[j]]=1
-                count+=1
-                if count==len(srepeat):
-                    if j-i<p-g:
-                        g=i
-                        p=j
-                    if j-i==p-g:
+    srepeat = list(set(cadena))
+    #['away', 'right', 'yes', 'sir']
+
+    # print(cadena)
+    # print(len(cadena))
+    # print(srepeat)
+
+    count = 0
+    contWords = 0
+    for i in range(len(srepeat)):
+        # x[srepeat[i]]=i
+        y[srepeat[i]] = 0
+
+    for i in range(len(cadena)):
+
+        for j in range(i, len(cadena)):
+            # print(i)
+
+            if y[cadena[j]] == 0:
+                y[cadena[j]] = 1
+                count += 1
+                if count == len(srepeat):
+                    if j - i < p - g:
+                        g = i
+                        p = j
+                    if j - i == p - g:
                         if i < g:
-                            g=i
-                            p=j
+                            g = i
+                            p = j
                         else:
                             pass
 
-       
-                    #print(i,j)
-                    count=0
+                    # print(i,j)
+                    count = 0
                     for s in range(len(srepeat)):
-                        #x[srepeat[i]]=i
-                        y[srepeat[s]]=0
+                        # x[srepeat[i]]=i
+                        y[srepeat[s]] = 0
 
                     break
-    #print(g,p+1)
-    return g,p+1
+    # print(g,p+1)
+    return g, p + 1
+
+def makeGraph(root, dic):
+
+    G = [[[0, 0] for _ in range(len(dic))] for _ in range(len(dic))]
+    Stack = deque([])
+    Stack.append(root)
+    while len(Stack) > 0:
+        curr = Stack.pop()
+        ady = avgTime(curr, dic)
+        for i in range(len(ady)):
+            G[dic[curr.author]][i][0] += ady[i][0]
+            G[dic[curr.author]][i][1] += ady[i][1]
+
+            G[i][dic[curr.author]][0] += ady[i][0]
+            G[i][dic[curr.author]][1] += ady[i][1]
+
+        for i in curr.children[::-1]:
+            Stack.append(i)
+
+    # Create degree matrix
+    deg = [0 for _ in range(len(G))]
+
+    for i in range(len(G)):
+        for j in range(len(G)):
+            if j != i and G[i][j][1] != 0:
+                G[i][j] = G[i][j][0] // G[i][j][1]
+            else:
+                G[i][j] = INF
+            if G[i][j] != INF:
+                deg[i] += 1
+
+    return G, deg
+
+
+def avgTime(root, dic):
+    sums = [[0, 0] for _ in range(len(dic))]
+    Stack = deque([])
+    Stack.append(root)
+    while len(Stack) > 0:
+
+        curr = Stack.pop()
+
+        sums[dic[curr.author]][0] += diff(root.date, curr.date)
+        sums[dic[curr.author]][1] += 1
+
+        for i in curr.children[::-1]:
+            Stack.append(i)
+
+    return sums
+
+
+def parseDate(date):
+    time = date[-8:]
+    hour = int(time[0:2])
+    min = int(time[3:5])
+    sec = int(time[6:8])
+    date = date[-19:-9]
+    year = int(date[0:4])
+    month = int(date[5:7])
+    day = int(date[8:10])
+    return year, month, day, hour, min, sec
+
+
+def diff(date_ini, date_end):
+    yearI, monthI, dayI, hourI, minI, secI = parseDate(date_ini)
+    yearE, monthE, dayE, hourE, minE, secE = parseDate(date_end)
+    return (datetime(yearE, monthE, dayE, hourE, minE, secE) - datetime(yearI, monthI, dayI, hourI, minI, secI)).seconds
+
+
+def findNumCentres(G, deg):
+    degr = Counter(deg).most_common(1)[0][0]
+
+    if degr < 2:
+        degr = 2
+
+    return degr
+
+
+def getCenters(cent, users):
+    ans = list()
+    for usr, num in cent:
+        ans.append(users[usr])
+    return ans
+
+
+def dijkstra(G, src):
+    dist = [INF for _ in range(len(G))]
+    sptSet = [0 for _ in range(len(G))]
+    dist[src] = 0
+    u = 0
+    for i in range(len(G)):
+        # Pick the minimum distance vertex from the set of vertices not
+        # yet processed. u is always equal to src in the first iteration.
+        min = INF
+        for j in range(len(G)):
+            if dist[j] <= min and sptSet[j] == 0:
+                min = dist[j]
+                u = j
+
+        # Mark the picked vertex as processed
+        sptSet[u] = 1
+
+        for v in range(len(G)):
+            if sptSet[v] == 0 and G[u][v] != INF and dist[u] != INF and dist[u] + G[u][v] < dist[v]:
+                dist[v] = dist[u] + G[u][v]
+
+    return dist
+
+
+def getVerts(dist, centers, indx):
+    verts = [list() for _ in range(len(centers))]
+    for i in range(len(indx)):
+        min = INF
+        cent = -1
+        if i not in centers:
+            for c in centers:
+                if dist[c][i] < min and dist[c][i] != 0:
+                    min = dist[c][i]
+                    cent = c
+            verts[cent].append(indx[i])
+
+    return verts
 
 
 def main():
@@ -336,9 +455,8 @@ def main():
         # Se arma el árbol con el árbol declarado anteriormente
         line = make_tree(tree, 0, False, line)
         # Se procesa la lista de preorder del árbol
-        
-        ans,ans1 = preorderTraversal(tree.root)
-        #ENTREGA 0 
+
+        # ENTREGA 0
         """
         for id in ans[:-1]:
             print(id, end=" ")
@@ -363,20 +481,69 @@ def main():
         for author, count in ans:
             print(author, count)
         """
-        #ENTREGA 1
-        #parte 2
+        # ENTREGA 1
+        # parte 1
+                # Se inicializa la lista donde estará la lista de usuarios con
+        # sus respectivas ocurrencias
+        ans = [0 for _ in range(len(users))]
+        # Se inicializa la lista que cuenta los ocurrencias de los
+        # usuarios
+        counts = [0 for _ in range(len(users))]
+        # Se genera la lista de usuarios y ocurrencias en la lista ans
+        # como tuplas
+        getUsernames(tree.root, users, counts, ans)
+        # Se ordena la lista primero con el criterio de las ocurrencias en
+        # orden descendente y se desempata con el orden léxicográfico
+        ans.sort(key=lambda tup: (-tup[1], tup[0]))
+        # print(ans)
+        users = {}
+        indx = {}
+        for i in range(len(ans)):
+            users[ans[i][0]] = i
+            indx[i] = ans[i][0]
+
+        # print(users)
+
+        G, deg = makeGraph(tree.root, users)
+        # print("Grafo:", G)
+        k = findNumCentres(G, deg)
+        # print(k)
+        centers = getCenters(ans[0:k], users)
+        # print(centers)
+
+        #dist, verts = floyd_warshall(G, len(G), centers, indx)
+        # print(dist)
+        dist = [list() for _ in range(len(centers))]
+        for c in centers:
+            dist[c] = dijkstra(G, c)
+        # print("DIST:", dist[0])
+
+        verts = getVerts(dist, centers, indx)
+        # print(verts)
+        # print(dist[0])
+        for i in range(len(centers)):
+            sum = 0
+            print(ans[i][0], end=' ')
+            for v in verts[i]:
+                print(v, end=' ')
+                sum += dist[i][users[v]]
+            print(sum, end='\n\n')
+
+        # parte 2
+        ans, ans1 = preorderTraversal(tree.root)
         for id in ans[:-1]:
-            is1,is2=getRangeWords(ans1[id])
+            is1, is2 = getRangeWords(ans1[id])
 
             print(id, is1, is2)
 
-        is1,is2=getRangeWords(ans1[ans[-1]])
+        is1, is2 = getRangeWords(ans1[ans[-1]])
 
         print(ans[-1], is1, is2)
-        #sumOfNodes(tree.root)
-        #print()
+        # sumOfNodes(tree.root)
+        # print()
 
-    y=time.time()
-    #print(y-x)        
+    y = time.time()
+    # print(y-x)
+
 
 main()
